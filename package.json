@@ -10,6 +10,7 @@
   "license": "GPL-3.0",
   "devDependencies": {
     "cheerio": "^0.22.0",
-    "request": "^2.81.0"
+    "request": "^2.81.0",
+    "request-promise": "^4.2.1"
   }
 }
