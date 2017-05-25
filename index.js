@@ -110,6 +110,10 @@ rp(options)
         } else {
           wood.props.specific_gravity.set('unknown', n_value);
         }
+      } else if (n_name.indexOf('common_name') !== -1) {
+        let common_names = new Set(n_value.split(/,\s+/));
+        common_names.add(wood.name);
+        wood.props.common_names = common_names;
       } else {
         wood.props[n_name] = n_value;
       }
