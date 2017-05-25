@@ -36,10 +36,10 @@ rp(options)
   // load each page
   let sequence = Promise.resolve();
   let wood_pages = [];
-  woods = woods.slice(-10); // TODO remove me
+  woods = woods.slice(-1); // TODO remove me
   woods.forEach(wood => {
     sequence = sequence.then(() => {
-      console.log(`loaded ${wood.name} page`)
+      console.log(`loaded ${wood.name} page`);
       return rp({
         uri: wood.original_page_uri,
         transform: CHEERIO_TRANSFORM
@@ -87,15 +87,32 @@ rp(options)
     }
     
     wood.props = {};
-    var entries = $(TABLE_SELECTOR).find('p');
+    let entries = $(TABLE_SELECTOR).find('p');
+    
     entries.each((i, elem) => {
       var el = $(elem);
       let name = el.find('a').text();
       let value = el.text().replace(name, ''); // remove leading name
       name = normalizeName(name);
       value = normalizeValue(value);
-      // TODO account for multiple values with specific gravity
-      wood.props[name] = value;
+      
+      if (name.lastIndexOf('specific_gravity') !== -1) {
+        wood.props.specific_gravity = new Map();
+        
+        // check that there are only two values for specific gravity
+        let units = name.match(/\((.*)\)/);
+        if (units && units[1]) {
+          let values = value.split(', ');
+          
+          units[1].split(',_').forEach((unit, i) => {
+            wood.props.specific_gravity.set(unit, values[i]);
+          });
+        } else {
+          wood.props.specific_gravity.set('unknown', value);
+        }
+      } else {
+        wood.props[name] = value;
+      }
     });
   });
   
