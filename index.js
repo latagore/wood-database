@@ -93,25 +93,25 @@ rp(options)
       var el = $(elem);
       let name = el.find('a').text();
       let value = el.text().replace(name, ''); // remove leading name
-      name = normalizeName(name);
-      value = normalizeValue(value);
+      n_name = normalizeName(name); // used for wood.props.key
+      n_value = normalizeValue(value);
       
-      if (name.lastIndexOf('specific_gravity') !== -1) {
+      if (n_name.lastIndexOf('specific_gravity') !== -1) {
         wood.props.specific_gravity = new Map();
         
         // check that there are only two values for specific gravity
         let units = name.match(/\((.*)\)/);
         if (units && units[1]) {
-          let values = value.split(', ');
+          let values = n_value.split(', ');
           
-          units[1].split(',_').forEach((unit, i) => {
+          units[1].split(', ').forEach((unit, i) => {
             wood.props.specific_gravity.set(unit, values[i]);
           });
         } else {
-          wood.props.specific_gravity.set('unknown', value);
+          wood.props.specific_gravity.set('unknown', n_value);
         }
       } else {
-        wood.props[name] = value;
+        wood.props[n_name] = n_value;
       }
     });
   });
