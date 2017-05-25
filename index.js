@@ -11,6 +11,12 @@ let options = {
   transform: CHEERIO_TRANSFORM
 };
 
+const utils = {
+  contains(string, substring) {
+    return string.indexOf(substring) !== -1;  
+  }
+}
+
 rp(options)
 .catch((err) => {
   console.log(`something went wrong while crawling the home page`);
@@ -114,6 +120,17 @@ rp(options)
         let common_names = new Set(n_value.split(/,\s+/));
         common_names.add(wood.name);
         wood.props.common_names = common_names;
+      } else if (utils.contains(n_name, 'tree_size')) {
+        let values = n_value.split(/,\s+/);
+        values.forEach((v) => {
+          if (utils.contains(v, 'tall')) {
+            wood.props.height = v;
+          } else if (utils.contains(v, 'diameter')) {
+            wood.props.diameter = v;
+          } else {
+            console.warn(`unknown tree size value "${v}" for ${wood.name}`);
+          }
+        });
       } else {
         wood.props[n_name] = n_value;
       }
