@@ -1,5 +1,6 @@
 let rp = require('request-promise');
 let cheerio = require('cheerio');
+let s = require('underscore.string');
 
 const HOME_PAGE_URL = 'http://www.wood-database.com';
 const CHEERIO_TRANSFORM = function (body) {
@@ -11,11 +12,6 @@ let options = {
   transform: CHEERIO_TRANSFORM
 };
 
-const utils = {
-  contains(string, substring) {
-    return string.indexOf(substring) !== -1;  
-  }
-}
 
 rp(options)
 .catch((err) => {
@@ -76,7 +72,7 @@ rp(options)
       .trim();
   };
   const normalizeValue = function(value) {
-    if (value.lastIndexOf('No data available') !== -1) {
+    if (s(value).contains('No data available')) {
       return undefined;
     } else {
       return value.trim();
@@ -102,7 +98,7 @@ rp(options)
       n_name = normalizeName(name); // used for wood.props.key
       n_value = normalizeValue(value);
       
-      if (n_name.lastIndexOf('specific_gravity') !== -1) {
+      if (s(n_name).contains('specific_gravity')) {
         wood.props.specific_gravity = new Map();
         
         // check that there are only two values for specific gravity
@@ -116,11 +112,11 @@ rp(options)
         } else {
           wood.props.specific_gravity.set('unknown', n_value);
         }
-      } else if (n_name.indexOf('common_name') !== -1) {
+      } else if (s(n_name).contains('common_name')) {
         let common_names = new Set(n_value.split(/,\s+/));
         common_names.add(wood.name);
         wood.props.common_names = common_names;
-      } else if (utils.contains(n_name, 'tree_size')) {
+      } else if (s(n_name).contains('tree_size')) {
         let values = n_value.split(/,\s+/);
         values.forEach((v) => {
           if (utils.contains(v, 'tall')) {
