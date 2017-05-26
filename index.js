@@ -1,5 +1,6 @@
 let rp = require('request-promise');
 let cheerio = require('cheerio');
+let _ = require('underscore');
 let s = require('underscore.string');
 
 const HOME_PAGE_URL = 'http://www.wood-database.com';
@@ -12,6 +13,28 @@ let options = {
   transform: CHEERIO_TRANSFORM
 };
 
+const utils = {
+  
+  // takes a string of the form "2.0-3.0 ft"
+  // and returns an object containing the min, the max and the unit
+  // in the form {min: min, max: max, unit: unit}
+  // returns min, max, or unit as undefined if they are missing.
+  // returns undefined if the string does not meet the given format
+  extractRange: function (string) {
+    // matches "2.0-3.0 ft" and variants, capturing the first and second numbers
+    let matches = string.match(/(\d+(?:\.\d+)?|\.d+)-(\d+(?:\.\d+)?|\.d+)\s+(\S+)/);
+
+    if (!matches) {
+      return undefined;
+    }
+
+    return {
+      min: matches[1],
+      max: matches[2],
+      unit: matches[3]
+    };
+  }
+};
 
 rp(options)
 .catch((err) => {
@@ -119,13 +142,33 @@ rp(options)
       } else if (s(n_name).contains('tree_size')) {
         let values = n_value.split(/,\s+/);
         values.forEach((v) => {
-          if (utils.contains(v, 'tall')) {
-            wood.props.height = v;
-          } else if (utils.contains(v, 'diameter')) {
-            wood.props.diameter = v;
+          let range = utils.extractRange(v);
+          if (_.isUndefined(range)){
+            console.warn(`unknown tree size value "${v}" for ${wood.name}`);
+            return;
+          }
+          
+          let measurement;
+          if (s(v).contains('tall')) {
+            measurement = 'height';
+          } else if (s(v).contains('diameter')) {
+            measurement = 'diameter';
           } else {
             console.warn(`unknown tree size value "${v}" for ${wood.name}`);
+            return;
           }
+          
+          if (_.isUndefined(range.min)) {
+              console.warn(`unknown min ${measurement} for ${wood.name}, continuing anyways`);
+          }
+          if (_.isUndefined(range.max)) {
+            console.warn(`unknown max ${measurement} for ${wood.name}, continuing anyways`);
+          }
+          if (_.isUndefined(range.unit)) {
+            console.warn(`unknown ${measurement} unit for ${wood.name}, continuing anyways`);
+          }
+          
+          wood.props[measurement] = range;
         });
       } else {
         wood.props[n_name] = n_value;
