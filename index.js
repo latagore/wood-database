@@ -137,12 +137,15 @@ rp(options)
   
   // list of all the properties that have a single value and unit
   // example 1: "10 ft", example 2: "500 lb/f"
-  const SINGLE_VALUE_AND_UNIT_MEASUREMENTS_LIST = [
+  const SINGLE_VALUE_AND_UNIT_PROPERTIES_LIST = [
    'average_dried_weight',
     'janka_hardness',
     'modulus_of_rupture',
     'elastic_modulus',
     'crushing_strength'
+  ];
+  const PLAIN_TEXT_PROPERTIES_LIST = [
+    'distribution'
   ];
   woods.forEach(wood => {
       console.log(`processing ${wood.name}`);
@@ -215,7 +218,7 @@ rp(options)
           
           wood.props[measurement] = range;
         });
-      } else if (_.contains(SINGLE_VALUE_AND_UNIT_MEASUREMENTS_LIST, n_name)) {
+      } else if (_.contains(SINGLE_VALUE_AND_UNIT_PROPERTIES_LIST, n_name)) {
         let prop = utils.extractValueWithUnit(value);
         if (_.isUndefined(prop)){
             console.warn(`unknown ${name} value "${value}" for ${wood.name}`);
@@ -262,7 +265,9 @@ rp(options)
         
         wood.props[n_name] = prop;
       } else {
-        console.warn(`unknown property ${n_name} for ${wood.name}. using raw value.`);
+        if (!_.contains(PLAIN_TEXT_PROPERTIES_LIST, n_name)) {
+          console.warn(`unknown property ${n_name} for ${wood.name}. using raw value.`);
+        }
         wood.props[n_name] = n_value;
       }
     });
