@@ -65,7 +65,7 @@ const utils = {
     if (!/(\d+(?:\.\d+)?|\.d+|\d{1,3}(?:,\d{3})+)/.test(string)){
       throw new Error(`"${string}" is not a valid number for parseNumber(). See docs.`);
     }
-    return parseFloat(string.replace(',', ''));
+    return parseFloat(string.replace(/,\s*/g, ''));
   }
 };
 
