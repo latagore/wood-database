@@ -246,6 +246,21 @@ rp(options)
         
         // plural property, since it can have more than one
         wood.props.scientific_names = names;
+      } else if (s(n_name).contains('shrinkage')) {
+        let prop = new Map();
+        
+        n_value.split(/,\s/).forEach(x => {
+          let matches = x.match(/(.+?):\s+([^%]+)/);
+          let shrinkageType = matches[1];
+          let shrinkageValue = matches[2];
+          
+          // ignore the T/R ratio because we can compute that
+          if (!s(shrinkageType).contains('T/R Ratio')) {
+            prop.set(normalizeName(shrinkageType), utils.parseNumber(shrinkageValue));
+          }
+        });
+        
+        wood.props[n_name] = prop;
       } else {
         console.warn(`unknown property ${n_name} for ${wood.name}. using raw value.`);
         wood.props[n_name] = n_value;
