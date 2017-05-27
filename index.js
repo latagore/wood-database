@@ -33,6 +33,39 @@ const utils = {
       max: matches[2],
       unit: matches[3]
     };
+  },
+  
+  // takes a string of the form "2.0 ft"
+  // and returns an object containing the value and the unit
+  // in the form {value: value, unit: unit}
+  // returns value or unit as undefined if they are missing.
+  // returns undefined if the string does not meet the given format
+  extractValueWithUnit: function (string) {
+    let matches = string.match(/(\d+(?:\.\d+)?|\.d+|\d{1,3}(?:,\d{3})+)\s+(\S+)/);
+
+    if (!matches) {
+      return undefined;
+    }
+
+    return {
+      value: utils.parseNumber(matches[1]),
+      unit: matches[2]
+    };
+  },
+  
+  
+  // parses any string, with or without thousands delimiters and returns a Number object.
+  parseNumber(string) {
+    if (_.isNumber(string)){
+      return string;
+    }
+    if (!_.isString(string)) {
+      throw new Error(`"${string}" is not a string.`);
+    }
+    if (!/(\d+(?:\.\d+)?|\.d+|\d{1,3}(?:,\d{3})+)/.test(string)){
+      throw new Error(`"${string}" is not a valid number for parseNumber(). See docs.`);
+    }
+    return parseFloat(string.replace(',', ''));
   }
 };
 
@@ -101,6 +134,16 @@ rp(options)
       return value.trim();
     }
   };
+  
+  // list of all the properties that have a single value and unit
+  // example 1: "10 ft", example 2: "500 lb/f"
+  const SINGLE_VALUE_AND_UNIT_MEASUREMENTS_LIST = [
+   'average_dried_weight',
+    'janka_hardness',
+    'modulus_of_rupture',
+    'elastic_modulus',
+    'crushing_strength'
+  ];
   woods.forEach(wood => {
       console.log(`processing ${wood.name}`);
     // each row element containing the statistics
@@ -121,7 +164,9 @@ rp(options)
       n_name = normalizeName(name); // used for wood.props.key
       n_value = normalizeValue(value);
       
-      if (s(n_name).contains('specific_gravity')) {
+      if (n_value === undefined) {
+        wood.props[n_name] = undefined;
+      } else if (s(n_name).contains('specific_gravity')) {
         wood.props.specific_gravity = new Map();
         
         // check that there are only two values for specific gravity
@@ -170,7 +215,22 @@ rp(options)
           
           wood.props[measurement] = range;
         });
+      } else if (_.contains(SINGLE_VALUE_AND_UNIT_MEASUREMENTS_LIST, n_name)) {
+        let prop = utils.extractValueWithUnit(value);
+        if (_.isUndefined(prop)){
+            console.warn(`unknown ${name} value "${value}" for ${wood.name}`);
+            return;
+          }
+        if (_.isUndefined(prop.value)) {
+          console.warn(`unknown ${name} value for ${wood.name}, continuing anyways`);
+        }
+        if (_.isUndefined(prop.unit)) {
+          console.warn(`unknown ${name} unit for ${wood.name}, continuing anyways`);
+        }
+        
+        wood.props[n_name] = prop;
       } else {
+        console.warn(`unknown property ${n_name} for ${wood.name}. using raw value.`);
         wood.props[n_name] = n_value;
       }
     });
