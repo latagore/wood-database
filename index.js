@@ -94,7 +94,7 @@ rp(options)
   // load each page
   let sequence = Promise.resolve();
   let wood_pages = [];
-  woods = woods.slice(-1); // TODO remove me
+  woods = woods.filter((x) => x.name === "Macacauba"); // TODO remove me
   woods.forEach(wood => {
     sequence = sequence.then(() => {
       console.log(`loaded ${wood.name} page`);
@@ -229,6 +229,23 @@ rp(options)
         }
         
         wood.props[n_name] = prop;
+      } else if (s(n_name).contains('scientific_name')) {
+        let matches = n_value.match(/([^(]+)\s?\((.+)\)/);
+        let names = new Set();
+        if (matches && matches.length === 2) {
+          // only one species is included under this wood
+          names.add(n_value);
+        } else if (matches && matches.length === 3) {
+          // more than one species under this wood
+          let species = matches[2].split(/,\s/);
+          
+          species.forEach(s => names.add(s));
+        } else {
+          names.add(n_value);
+        }
+        
+        // plural property, since it can have more than one
+        wood.props.scientific_names = names;
       } else {
         console.warn(`unknown property ${n_name} for ${wood.name}. using raw value.`);
         wood.props[n_name] = n_value;
