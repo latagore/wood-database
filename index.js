@@ -94,7 +94,7 @@ rp(options)
   // load each page
   let sequence = Promise.resolve();
   let wood_pages = [];
-  woods = woods.filter((x) => x.name === "Macacauba"); // TODO remove me
+//  woods = woods.filter((x) => x.name === "Macacauba"); // TODO remove me
   woods.forEach(wood => {
     sequence = sequence.then(() => {
       console.log(`loaded ${wood.name} page`);
